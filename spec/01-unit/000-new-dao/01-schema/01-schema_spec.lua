@@ -1152,21 +1152,22 @@ describe("schema", function()
       end)
 
       it("a specialized field can force a value using 'eq'", function()
-        package.loaded["kong.db.schema.entities.mock_consumers"] = {
-          name = "mock_consumer",
+        assert(Schema.new({
+          name = "mock_consumers",
           primary_key = { "id" },
           fields = {
             { id = { type = "string" }, },
           }
-        }
-        local Test = Schema.new({
+        }))
+
+        local Test = assert(Schema.new({
           name = "test",
           subschema_key = "name",
           fields = {
             { name = { type = "string", required = true, } },
             { consumer = { type = "foreign", reference = "mock_consumers" } },
           }
-        })
+        }))
         Test:new_subschema("no_consumer", {
           fields = {
             { consumer = { type = "foreign", reference = "mock_consumers", eq = ngx.null } }
@@ -1237,13 +1238,13 @@ describe("schema", function()
     end)
 
     it("fails on missing foreign primary keys", function()
-      package.loaded["kong.db.schema.entities.schema-test"] = {
+      assert(Schema.new({
         name = "schema-test",
         primary_key = { "id" },
         fields = {
           { id = { type = "string" }, },
         }
-      }
+      }))
       local Test = assert(Schema.new({
         name = "Test",
         fields = {
@@ -1259,13 +1260,13 @@ describe("schema", function()
     end)
 
     it("fails on bad foreign primary keys", function()
-      package.loaded["kong.db.schema.entities.schema-test"] = {
+      assert(Schema.new({
         name = "schema-test",
         primary_key = { "id" },
         fields = {
           { id = { type = "string", required = true }, },
         }
-      }
+      }))
       local Test = assert(Schema.new({
         name = "Test",
         fields = {
@@ -1276,10 +1277,10 @@ describe("schema", function()
       }))
       Test.primary_key = { "f" }
       local ok, errs = Test:validate_primary_key({
-        f = { id = ngx.null },
+        f = { },
       })
       assert.falsy(ok)
-      assert.match("required field missing", errs["f"].id)
+      assert.match("missing primary key", errs["f"].id)
     end)
 
     it("accepts a null in foreign if a null fails on bad foreign primary keys", function()
@@ -1300,10 +1301,10 @@ describe("schema", function()
       }))
       Test.primary_key = { "f" }
       local ok, errs = Test:validate_primary_key({
-        f = { id = ngx.null },
+        f = { },
       })
       assert.falsy(ok)
-      assert.match("required field missing", errs["f"].id)
+      assert.match("missing primary key", errs["f"].id)
     end)
 
     it("fails given non-primary keys", function()
