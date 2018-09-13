@@ -268,16 +268,16 @@ function Plugins:load_plugin_schemas(plugin_set)
         local Strategy = require(string.format("kong.db.strategies.%s", db.strategy))
         for name, schema_def in pairs(daos_schemas) do
           if name ~= "tables" and schema_def.name then
-            ngx_log(ngx_DEBUG, string.format("Loading custom plugin entity: '%s.%s'", plugin, name))
+            ngx_log(ngx_DEBUG, string.format("Loading custom plugin entity: '%s.%s'", plugin, schema_def.name))
             local ok, err_t = MetaSchema:validate(schema_def)
             if not ok then
-              return nil, string.format("schema of custom plugin entity '%s.%s' is invalid: %s", plugin, name,
-                -- tostring(db.errors:schema_violation(err_t)))
-                require("inspect")({ err_t = err_t, schema_def = schema_def }))
+              return nil, string.format("schema of custom plugin entity '%s.%s' is invalid: %s",
+                plugin, schema_def.name,
+                tostring(db.errors:schema_violation(err_t)))
             end
             local schema, err = Entity.new(schema_def)
             if not schema then
-              return nil, string.format("schema of custom plugin entity '%s.%s' is invalid: %s", plugin, name,
+              return nil, string.format("schema of custom plugin entity '%s.%s' is invalid: %s", plugin, schema_def.name,
                 err)
             end
             local strategy, err = Strategy.new(db.connector, schema, db.errors)
